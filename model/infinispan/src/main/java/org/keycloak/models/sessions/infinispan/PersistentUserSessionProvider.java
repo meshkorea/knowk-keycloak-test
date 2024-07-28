@@ -300,11 +300,14 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
 
 
     protected Stream<UserSessionModel> getUserSessionsStream(RealmModel realm, UserSessionPredicate predicate, boolean offline) {
+        log.infof("mazend: persist: getUserSessionsStream3");
         // fetch the offline user-sessions from the persistence provider
         UserSessionPersisterProvider persister = session.getProvider(UserSessionPersisterProvider.class);
         if (predicate.getUserId() != null) {
+            log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null");
             UserModel user;
             if (LightweightUserAdapter.isLightweightUser(predicate.getUserId())) {
+                log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null -> 1");
               user = new UserModelDelegate(null) {
                   @Override
                   public String getId() {
@@ -312,19 +315,23 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
                   }
               };
             } else {
+                log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null -> 2");
               user = session.users().getUserById(realm, predicate.getUserId());
             }
             if (user != null) {
+                log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null -> 3");
                 return persister.loadUserSessionsStream(realm, user, offline, 0, null)
                         .filter(predicate.toModelPredicate())
                         .map(s -> (UserSessionModel) getUserSession(realm, s.getId(), offline))
                         .filter(Objects::nonNull);
             } else {
+                log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null -> 4");
                 return Stream.empty();
             }
         }
 
         if (predicate.getBrokerUserId() != null) {
+            log.infof("mazend: persist: getUserSessionsStream3: predicate.getBrokerUserId() != null");
             String[] idpAliasSessionId = predicate.getBrokerUserId().split("\\.");
 
             Map<String, String> attributes = new HashMap<>();
@@ -342,7 +349,12 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
         }
 
         if (predicate.getClient() != null) {
+            log.infof("mazend: persist: getUserSessionsStream3: predicate.getClient() != null");
             ClientModel client = session.clients().getClientById(realm, predicate.getClient());
+
+            log.infof("mazend: persist: getUserSessionsStream3: loadUserSessionsStream count = %d",
+                    persister.loadUserSessionsStream(realm, client, offline, 0, null).count());
+
             return persister.loadUserSessionsStream(realm, client, offline, 0, null)
                     .filter(predicate.toModelPredicate())
                     .map(s -> (UserSessionModel) getUserSession(realm, s.getId(), offline))
@@ -350,6 +362,7 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
         }
 
         if (predicate.getBrokerSessionId() != null && !offline) {
+            log.infof("mazend: persist: getUserSessionsStream3: predicate.getBrokerSessionId() != null && !offline");
             // we haven't yet migrated the old offline entries, so they don't have a brokerSessionId yet
             return Stream.of(persister.loadUserSessionsStreamByBrokerSessionId(realm, predicate.getBrokerSessionId(), false))
                     .filter(predicate.toModelPredicate())
@@ -400,10 +413,12 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
 
     @Override
     public Stream<UserSessionModel> getUserSessionsStream(RealmModel realm, ClientModel client, Integer firstResult, Integer maxResults) {
+        log.infof("mazend: persist: getUserSessionsStream1");
         return getUserSessionsStream(realm, client, firstResult, maxResults, false);
     }
 
     protected Stream<UserSessionModel> getUserSessionsStream(final RealmModel realm, ClientModel client, Integer firstResult, Integer maxResults, final boolean offline) {
+        log.infof("mazend: persist: getUserSessionsStream2");
         UserSessionPredicate predicate = UserSessionPredicate.create(realm.getId()).client(client.getId());
 
         return paginatedStream(getUserSessionsStream(realm, predicate, offline), firstResult, maxResults);

@@ -474,10 +474,12 @@ public class InfinispanUserSessionProvider implements UserSessionProvider, Sessi
 
     @Override
     public Stream<UserSessionModel> getUserSessionsStream(RealmModel realm, ClientModel client, Integer firstResult, Integer maxResults) {
+        log.infof("mazend: inifini: getUserSessionsStream1");
         return getUserSessionsStream(realm, client, firstResult, maxResults, false);
     }
 
     protected Stream<UserSessionModel> getUserSessionsStream(final RealmModel realm, ClientModel client, Integer firstResult, Integer maxResults, final boolean offline) {
+        log.infof("mazend: inifini: getUserSessionsStream2");
         if (offline) {
             // fetch the actual offline user session count from the database
             UserSessionPersisterProvider persister = session.getProvider(UserSessionPersisterProvider.class);

@@ -17,8 +17,10 @@
 
 package org.keycloak.models.sessions.infinispan.stream;
 
+import org.jboss.logging.Logger;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.models.sessions.infinispan.AuthenticatedClientSessionAdapter;
+import org.keycloak.models.sessions.infinispan.PersistentUserSessionProvider;
 import org.keycloak.models.sessions.infinispan.changes.SessionEntityWrapper;
 import org.keycloak.models.sessions.infinispan.entities.UserSessionEntity;
 
@@ -37,6 +39,7 @@ import org.infinispan.commons.marshall.SerializeWith;
  */
 @SerializeWith(UserSessionPredicate.ExternalizerImpl.class)
 public class UserSessionPredicate implements Predicate<Map.Entry<String, SessionEntityWrapper<UserSessionEntity>>> {
+    private static final Logger log = Logger.getLogger(UserSessionPredicate.class);
 
     private final String realm;
 
@@ -171,41 +174,53 @@ public class UserSessionPredicate implements Predicate<Map.Entry<String, Session
     }
 
     public Predicate<? super UserSessionModel> toModelPredicate() {
+        log.infof("mazend: UserSessionPredicate: toModelPredicate");
 
         return (Predicate<UserSessionModel>) entity -> {
             if (!realm.equals(entity.getRealm().getId())) {
+                log.infof("mazend: UserSessionPredicate: toModelPredicate: !realm.equals(entity.getRealm().getId())");
                 return false;
             }
 
             if (user != null && !entity.getUser().getId().equals(user)) {
+                log.infof("mazend: UserSessionPredicate: toModelPredicate: user != null && !entity.getUser().getId().equals(user)");
                 return false;
             }
 
             if (client != null && (entity.getAuthenticatedClientSessions() == null || !entity.getAuthenticatedClientSessions().containsKey(client))) {
+                log.infof("mazend: UserSessionPredicate: toModelPredicate: client != null && (entity.getAuthenticatedClientSessions() == null || !entity.getAuthenticatedClientSessions().containsKey(client))");
                 return false;
             }
 
             if (brokerSessionId != null && !brokerSessionId.equals(entity.getBrokerSessionId())) {
+                log.infof("mazend: UserSessionPredicate: brokerSessionId != null && !brokerSessionId.equals(entity.getBrokerSessionId())");
                 return false;
             }
 
             if (brokerUserId != null && !brokerUserId.equals(entity.getBrokerUserId())) {
+                log.infof("mazend: UserSessionPredicate: brokerUserId != null && !brokerUserId.equals(entity.getBrokerUserId())");
                 return false;
             }
 
             if (entity.isRememberMe()) {
+                log.infof("mazend: UserSessionPredicate: entity.isRememberMe()");
                 if (expiredRememberMe != null && expiredRefreshRememberMe != null && entity.getStarted() > expiredRememberMe && entity.getLastSessionRefresh() > expiredRefreshRememberMe) {
+                    log.infof("mazend: UserSessionPredicate: entity.isRememberMe()2");
                     return false;
                 }
             } else {
+                log.infof("mazend: UserSessionPredicate: !entity.isRememberMe()");
                 if (expired != null && expiredRefresh != null && entity.getStarted() > expired && entity.getLastSessionRefresh() > expiredRefresh) {
+                    log.infof("mazend: UserSessionPredicate: !entity.isRememberMe()2");
                     return false;
                 }
             }
 
             if (expired == null && expiredRefresh != null && entity.getLastSessionRefresh() > expiredRefresh) {
+                log.infof("mazend: UserSessionPredicate: expired == null && expiredRefresh != null && entity.getLastSessionRefresh() > expiredRefresh");
                 return false;
             }
+            log.infof("mazend: UserSessionPredicate: true");
             return true;
         };
     }
