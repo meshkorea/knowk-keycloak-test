@@ -21,13 +21,23 @@
         <addColumn tableName="USER_ATTRIBUTE">
             <column name="LONG_VALUE_HASH" type="BINARY(64)" />
             <column name="LONG_VALUE_HASH_LOWER_CASE" type="BINARY(64)" />
-            <column name="LONG_VALUE" type="NCLOB" />
+            <!--AWS mysql 8.0 aurora 와 호환성 안맞음-->
+            <!--<column name="LONG_VALUE" type="NCLOB" />-->
         </addColumn>
+        <sql>
+            alter table USER_ATTRIBUTE
+                add LONG_VALUE LONGTEXT null;
+        </sql>
         <addColumn tableName="FED_USER_ATTRIBUTE">
             <column name="LONG_VALUE_HASH" type="BINARY(64)" />
             <column name="LONG_VALUE_HASH_LOWER_CASE" type="BINARY(64)" />
-            <column name="LONG_VALUE" type="NCLOB" />
+            <!--AWS mysql 8.0 aurora 와 호환성 안맞음-->
+            <!--<column name="LONG_VALUE" type="NCLOB" />-->
         </addColumn>
+        <sql>
+            alter table FED_USER_ATTRIBUTE
+                add LONG_VALUE LONGTEXT null;
+        </sql>
         <createIndex tableName="USER_ATTRIBUTE" indexName="USER_ATTR_LONG_VALUES">
             <column name="LONG_VALUE_HASH" />
             <column name="NAME" />
