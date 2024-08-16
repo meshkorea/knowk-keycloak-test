@@ -19,6 +19,8 @@
 package org.keycloak.models.sessions.infinispan.util;
 
 import java.util.concurrent.TimeUnit;
+
+import org.jboss.logging.Logger;
 import org.keycloak.common.util.Time;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.RealmModel;
@@ -31,7 +33,7 @@ import org.keycloak.models.utils.SessionExpirationUtils;
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
 public class SessionTimeouts {
-
+    protected static final Logger logger = Logger.getLogger(SessionTimeouts.class);
     /**
      * This indicates that entry is already expired and should be removed from the cache
      */
@@ -49,7 +51,9 @@ public class SessionTimeouts {
     public static long getUserSessionLifespanMs(RealmModel realm, ClientModel client, UserSessionEntity userSessionEntity) {
         long lifespan = SessionExpirationUtils.calculateUserSessionMaxLifespanTimestamp(false, userSessionEntity.isRememberMe(),
                 TimeUnit.SECONDS.toMillis(userSessionEntity.getStarted()), realm);
+        logger.infof("mazend: getUserSessionLifespanMs: lifespan1=%d", lifespan);
         lifespan = lifespan - Time.currentTimeMillis();
+        logger.infof("mazend: getUserSessionLifespanMs: lifespan2=%d", lifespan);
         if (lifespan <= 0) {
             return ENTRY_EXPIRED_FLAG;
         }
@@ -68,7 +72,9 @@ public class SessionTimeouts {
     public static long getUserSessionMaxIdleMs(RealmModel realm, ClientModel client, UserSessionEntity userSessionEntity) {
         long idle = SessionExpirationUtils.calculateUserSessionIdleTimestamp(false, userSessionEntity.isRememberMe(),
                 TimeUnit.SECONDS.toMillis(userSessionEntity.getLastSessionRefresh()), realm);
+        logger.infof("mazend: getUserSessionLifespanMs: idle1=%d", idle);
         idle = idle - Time.currentTimeMillis();
+        logger.infof("mazend: getUserSessionLifespanMs: idle2=%d", idle);
         if (idle <= 0) {
             return ENTRY_EXPIRED_FLAG;
         }

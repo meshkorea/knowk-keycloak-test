@@ -594,6 +594,7 @@ public class DefaultTokenExchangeProvider implements TokenExchangeProvider {
                 UserModel existingUser = session.users().getUserByEmail(realm, context.getEmail());
                 if (existingUser != null) {
                     event.error(Errors.FEDERATED_IDENTITY_EXISTS);
+                    logger.infof("User already exists1");
                     throw new CorsErrorResponseException(cors, Errors.INVALID_TOKEN, "User already exists", Response.Status.BAD_REQUEST);
                 }
             }
@@ -601,6 +602,7 @@ public class DefaultTokenExchangeProvider implements TokenExchangeProvider {
             UserModel existingUser = session.users().getUserByUsername(realm, username);
             if (existingUser != null) {
                 event.error(Errors.FEDERATED_IDENTITY_EXISTS);
+                logger.infof("User already exists2");
                 throw new CorsErrorResponseException(cors, Errors.INVALID_TOKEN, "User already exists", Response.Status.BAD_REQUEST);
             }
 

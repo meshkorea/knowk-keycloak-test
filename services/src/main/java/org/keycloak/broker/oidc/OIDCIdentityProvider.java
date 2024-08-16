@@ -394,7 +394,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
 
         try {
             BrokeredIdentityContext identity = extractIdentity(tokenResponse, accessToken, idToken);
-            
+
             if (!identity.getId().equals(idToken.getSubject())) {
                 throw new IdentityBrokerException("Mismatch between the subject in the id_token and the subject from the user_info endpoint");
             }
@@ -428,7 +428,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
             if (!getConfig().isDisableNonce()) {
                 identity.getContextData().put(BROKER_NONCE_PARAM, idToken.getOtherClaims().get(OIDCLoginProtocol.NONCE_PARAM));
             }
-            
+
             if (getConfig().isStoreToken()) {
                 if (tokenResponse.getExpiresIn() > 0) {
                     long accessTokenExpiration = Time.currentTime() + tokenResponse.getExpiresIn();
@@ -546,7 +546,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
         }
         if (tokenResponse != null) identity.getContextData().put(FEDERATED_ACCESS_TOKEN_RESPONSE, tokenResponse);
         if (tokenResponse != null) processAccessTokenResponse(identity, tokenResponse);
-        
+
         return identity;
     }
 
@@ -707,7 +707,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
         if (!ignoreAudience && !token.hasAudience(getConfig().getClientId())) {
             throw new IdentityBrokerException("Wrong audience from token.");
         }
-        
+
         if (!ignoreAudience && (token.getIssuedFor() != null && !getConfig().getClientId().equals(token.getIssuedFor()))) {
             throw new IdentityBrokerException("Token issued for does not match client id");
         }
@@ -751,7 +751,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
         String requestedIssuer = params == null ? null : params.getFirst(OAuth2Constants.SUBJECT_ISSUER);
         if (requestedIssuer == null) requestedIssuer = issuer;
         if (requestedIssuer.equals(getConfig().getAlias())) return true;
-        
+
         String trustedIssuers = getConfig().getIssuer();
 
         if (trustedIssuers != null && trustedIssuers.length() > 0) {
@@ -763,7 +763,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
                 }
             }
         }
-        
+
         return false;
     }
 
@@ -802,19 +802,19 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
         AbstractJsonUserAttributeMapper.storeUserProfileForMapper(identity, userInfo, getConfig().getAlias());
 
         identity.setId(id);
-        
+
         if (givenName != null) {
             identity.setFirstName(givenName);
         }
-        
+
         if (familyName != null) {
             identity.setLastName(familyName);
         }
-        
+
         if (givenName == null && familyName == null) {
             identity.setName(name);
         }
-        
+
         identity.setEmail(email);
 
         identity.setBrokerUserId(getConfig().getAlias() + "." + id);
@@ -836,6 +836,9 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
     }
 
     final protected BrokeredIdentityContext validateJwt(EventBuilder event, String subjectToken, String subjectTokenType) {
+        logger.infof("mazend: validateJwt: subjectToken = %s", subjectToken);
+        logger.infof("mazend: validateJwt: subjectTokenType = %s", subjectTokenType);
+
         if (!getConfig().isValidateSignature()) {
             return validateExternalTokenThroughUserInfo(event, subjectToken, subjectTokenType);
         }
@@ -863,6 +866,10 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
         }
 
         try {
+            logger.infof("mazend: parsedToken.getId() = %s", parsedToken.getId());
+            logger.infof("mazend: parsedToken.getIssuer() = %s", parsedToken.getIssuer());
+            logger.infof("mazend: parsedToken.getIat() = %s", parsedToken.getIat());
+            logger.infof("mazend: parsedToken.getType() = %s", parsedToken.getType());
             if (!isTokenTypeSupported(parsedToken)) {
                 throw new ErrorResponseException(OAuthErrorException.INVALID_TOKEN, "token type not supported", Response.Status.BAD_REQUEST);
             }
@@ -898,22 +905,33 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
 
     @Override
     protected BrokeredIdentityContext exchangeExternalImpl(EventBuilder event, MultivaluedMap<String, String> params) {
-        if (!supportsExternalExchange()) return null;
+        if (!supportsExternalExchange()) {
+            logger.infof("mazend: exchangeExternalImpl: !supportsExternalExchange()");
+            return null;
+        }
         String subjectToken = params.getFirst(OAuth2Constants.SUBJECT_TOKEN);
+        logger.infof("mazend: exchangeExternalImpl: subjectToken = %s", subjectToken);
         if (subjectToken == null) {
             event.detail(Details.REASON, OAuth2Constants.SUBJECT_TOKEN + " param unset");
             event.error(Errors.INVALID_TOKEN);
             throw new ErrorResponseException(OAuthErrorException.INVALID_TOKEN, "token not set", Response.Status.BAD_REQUEST);
         }
         String subjectTokenType = params.getFirst(OAuth2Constants.SUBJECT_TOKEN_TYPE);
+
+        logger.infof("mazend: exchangeExternalImpl: subjectTokenType = %s", subjectTokenType);
+
         if (subjectTokenType == null) {
             subjectTokenType = OAuth2Constants.ACCESS_TOKEN_TYPE;
         }
+
         if (OAuth2Constants.JWT_TOKEN_TYPE.equals(subjectTokenType) || OAuth2Constants.ID_TOKEN_TYPE.equals(subjectTokenType)) {
+            logger.infof("mazend: exchangeExternalImpl: 1");
             return validateJwt(event, subjectToken, subjectTokenType);
         } else if (OAuth2Constants.ACCESS_TOKEN_TYPE.equals(subjectTokenType)) {
+            logger.infof("mazend: exchangeExternalImpl: 2");
             return validateExternalTokenThroughUserInfo(event, subjectToken, subjectTokenType);
         } else {
+            logger.infof("mazend: exchangeExternalImpl: 3");
             event.detail(Details.REASON, OAuth2Constants.SUBJECT_TOKEN_TYPE + " invalid");
             event.error(Errors.INVALID_TOKEN_TYPE);
             throw new ErrorResponseException(OAuthErrorException.INVALID_TOKEN, "invalid token type", Response.Status.BAD_REQUEST);
@@ -943,7 +961,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
     @Override
     public void preprocessFederatedIdentity(KeycloakSession session, RealmModel realm, BrokeredIdentityContext context) {
         AuthenticationSessionModel authenticationSession = session.getContext().getAuthenticationSession();
-        
+
         if (authenticationSession == null || getConfig().isDisableNonce()) {
             // no interacting with the brokered OP, likely doing token exchanges or no nonce
             return;

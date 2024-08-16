@@ -152,6 +152,7 @@ public class AuthorizationCodeGrantType extends OAuth2GrantTypeBase {
         }
 
         if (!AuthenticationManager.isSessionValid(realm, userSession)) {
+            logger.info("mazend: Session not active1");
             String errorMessage = "Session not active";
             event.detail(Details.REASON, errorMessage);
             event.error(Errors.USER_SESSION_NOT_FOUND);

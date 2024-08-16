@@ -17,6 +17,8 @@
 package org.keycloak.models.utils;
 
 import java.util.concurrent.TimeUnit;
+
+import org.jboss.logging.Logger;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.RealmModel;
@@ -29,7 +31,7 @@ import org.keycloak.utils.StringUtil;
  * @author rmartinc
  */
 public class SessionExpirationUtils {
-
+    protected static final Logger logger = Logger.getLogger(SessionExpirationUtils.class);
     /**
      * Calculates the time in which the session is expired via max lifetime
      * configuration.
@@ -65,15 +67,20 @@ public class SessionExpirationUtils {
      * @return The time in which the user session is expired by idle timeout
      */
     public static long calculateUserSessionIdleTimestamp(boolean offline, boolean isRememberMe, long lastRefreshed, RealmModel realm) {
+        logger.infof("mazend: calculateUserSessionIdleTimestamp: offline = %b, isRememberMe = %b, lastRefreshed = %d, realm.id = %s", offline, isRememberMe, lastRefreshed, realm.getId());
         long timestamp;
         if (offline) {
             timestamp = lastRefreshed + TimeUnit.SECONDS.toMillis(getOfflineSessionIdleTimeout(realm));
+            logger.infof("mazend: calculateUserSessionIdleTimestamp: timestamp1 = %d", timestamp);
         } else {
             long userSessionIdleTimeout = TimeUnit.SECONDS.toMillis(getSsoSessionIdleTimeout(realm));
+            logger.infof("mazend: calculateUserSessionIdleTimestamp: userSessionIdleTimeout1 = %d", userSessionIdleTimeout);
             if (isRememberMe) {
                 userSessionIdleTimeout = Math.max(userSessionIdleTimeout, TimeUnit.SECONDS.toMillis(realm.getSsoSessionIdleTimeoutRememberMe()));
+                logger.infof("mazend: calculateUserSessionIdleTimestamp: userSessionIdleTimeout2 = %d", userSessionIdleTimeout);
             }
-            timestamp = lastRefreshed + userSessionIdleTimeout;
+            timestamp = lastRefreshed + userSessionIdleTimeout; // userSessionIdleTimeout -> 7 days
+            logger.infof("mazend: calculateUserSessionIdleTimestamp: timestamp2 = %d", timestamp);
         }
         return timestamp;
     }

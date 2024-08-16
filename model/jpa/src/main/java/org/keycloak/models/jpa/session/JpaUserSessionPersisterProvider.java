@@ -314,6 +314,13 @@ public class JpaUserSessionPersisterProvider implements UserSessionPersisterProv
 
         String offlineStr = offlineToString(offline);
 
+        logger.infof("mazend: Loading user userSessionId '%s' for realm.id '%s', offlineStr = %s", userSessionId, realm.getId(), offlineStr);
+
+        /*
+        OFFLINE_USER_SESSION
+        @NamedQuery(name="findUserSession", query="select sess from PersistentUserSessionEntity sess where sess.offline = :offline" +
+        " AND sess.userSessionId = :userSessionId AND sess.realmId = :realmId")
+         */
         TypedQuery<PersistentUserSessionEntity> userSessionQuery = em.createNamedQuery("findUserSession", PersistentUserSessionEntity.class);
         userSessionQuery.setParameter("realmId", realm.getId());
         userSessionQuery.setParameter("offline", offlineStr);
@@ -322,8 +329,14 @@ public class JpaUserSessionPersisterProvider implements UserSessionPersisterProv
 
         Stream<OfflineUserSessionModel> persistentUserSessions = closing(userSessionQuery.getResultStream().map(this::toAdapter));
 
+//        logger.infof("mazend: persistentUserSessions.count() = %d", persistentUserSessions.count()); // stream has already been operated upon or closed
+
         return persistentUserSessions.findAny().map(userSession -> {
 
+            /*
+            OFFLINE_CLIENT_SESSION
+            @NamedQuery(name="findClientSessionsByUserSession", query="select sess from PersistentClientSessionEntity sess where sess.userSessionId=:userSessionId and sess.offline = :offline"),
+             */
             TypedQuery<PersistentClientSessionEntity> clientSessionQuery = em.createNamedQuery("findClientSessionsByUserSession", PersistentClientSessionEntity.class);
             clientSessionQuery.setParameter("userSessionId", userSessionId);
             clientSessionQuery.setParameter("offline", offlineStr);
@@ -332,6 +345,7 @@ public class JpaUserSessionPersisterProvider implements UserSessionPersisterProv
 
             closing(clientSessionQuery.getResultStream()).forEach(clientSession -> {
                         boolean added = addClientSessionToAuthenticatedClientSessionsIfPresent(userSession, clientSession);
+                          logger.infof("mazend: added = %b", added);
                         if (!added) {
                             // client was removed in the meantime
                             removedClientUUIDs.add(clientSession.getClientId());
@@ -340,6 +354,8 @@ public class JpaUserSessionPersisterProvider implements UserSessionPersisterProv
             );
 
             removedClientUUIDs.forEach(this::onClientRemoved);
+
+            logger.infof("mazend: userSession = " + userSession);
 
             return userSession;
         }).orElse(null);
@@ -548,11 +564,11 @@ public class JpaUserSessionPersisterProvider implements UserSessionPersisterProv
         AuthenticatedClientSessionModel clientSessAdapter = toAdapter(userSession.getRealm(), userSession, clientSessionEntity);
 
         if (clientSessAdapter.getClient() == null) {
-            logger.tracef("Not adding client session %s / %s since client is null", userSession, clientSessAdapter);
+            logger.infof("Not adding client session %s / %s since client is null", userSession, clientSessAdapter);
             return false;
         }
 
-        logger.tracef("Adding client session %s / %s", userSession, clientSessAdapter);
+        logger.infof("Adding client session %s / %s", userSession, clientSessAdapter);
 
         String clientId = clientSessionEntity.getClientId();
         if (isExternalClient(clientSessionEntity)) {

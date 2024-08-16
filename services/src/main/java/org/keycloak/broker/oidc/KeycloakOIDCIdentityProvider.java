@@ -140,12 +140,17 @@ public class KeycloakOIDCIdentityProvider extends OIDCIdentityProvider {
     @Override
     protected BrokeredIdentityContext exchangeExternalImpl(EventBuilder event, MultivaluedMap<String, String> params) {
         String subjectToken = params.getFirst(OAuth2Constants.SUBJECT_TOKEN);
+
+        logger.infof("mazend: exchangeExternalImpl: subjectToken=%s ", subjectToken);
+
         if (subjectToken == null) {
             event.detail(Details.REASON, OAuth2Constants.SUBJECT_TOKEN + " param unset");
             event.error(Errors.INVALID_TOKEN);
             throw new ErrorResponseException(OAuthErrorException.INVALID_TOKEN, "token not set", Response.Status.BAD_REQUEST);
         }
         String subjectTokenType = params.getFirst(OAuth2Constants.SUBJECT_TOKEN_TYPE);
+
+        logger.infof("mazend: exchangeExternalImpl: subjectTokenType=%s ", subjectTokenType);
         if (subjectTokenType == null) {
             subjectTokenType = OAuth2Constants.ACCESS_TOKEN_TYPE;
         }

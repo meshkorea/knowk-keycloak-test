@@ -51,20 +51,29 @@ public class UserSessionPersistentChangelogBasedTransaction extends PersistentSe
     }
 
     public SessionEntityWrapper<UserSessionEntity> get(RealmModel realm, String key, boolean offline) {
+        LOG.info("mazend: getUserSession2.1.1");
         SessionUpdatesList<UserSessionEntity> myUpdates = getUpdates(offline).get(key);
+
+        LOG.infof("mazend: getUserSession2.1.1 getUpdates(offline).keySet().size() = %d", getUpdates(offline).keySet().size());
+        for (String k: getUpdates(offline).keySet()) {
+            LOG.infof("mazend: getUserSession2.1.1 key = %s", k);
+        }
+
+//        LOG.infof("mazend: getUserSession2.1.1 myUpdates.getUpdateTasks().size() = %d", myUpdates.getUpdateTasks().size());
+
         if (myUpdates == null) {
             SessionEntityWrapper<UserSessionEntity> wrappedEntity = null;
             wrappedEntity = getCache(offline).get(key);
 
             if (wrappedEntity == null) {
-                LOG.debugf("user-session not found in cache for sessionId=%s offline=%s, loading from persister", key, offline);
+                LOG.infof("user-session not found in cache for sessionId=%s offline=%s, loading from persister", key, offline); // 여기 탐
                 wrappedEntity = getSessionEntityFromPersister(realm, key, offline);
             } else {
-                LOG.debugf("user-session found in cache for sessionId=%s offline=%s %s", key, offline, wrappedEntity.getEntity().getLastSessionRefresh());
+                LOG.infof("user-session found in cache for sessionId=%s offline=%s %s", key, offline, wrappedEntity.getEntity().getLastSessionRefresh());
             }
 
             if (wrappedEntity == null) {
-                LOG.debugf("user-session not found in persister for sessionId=%s offline=%s", key, offline);
+                LOG.infof("user-session not found in persister for sessionId=%s offline=%s", key, offline);
                 return null;
             }
 
@@ -73,7 +82,7 @@ public class UserSessionPersistentChangelogBasedTransaction extends PersistentSe
 
             RealmModel realmFromSession = kcSession.realms().getRealm(wrappedEntity.getEntity().getRealmId());
             if (!realmFromSession.getId().equals(realm.getId())) {
-                LOG.warnf("Realm mismatch for session %s. Expected realm %s, but found realm %s", wrappedEntity.getEntity(), realm.getId(), realmFromSession.getId());
+                LOG.infof("Realm mismatch for session %s. Expected realm %s, but found realm %s", wrappedEntity.getEntity(), realm.getId(), realmFromSession.getId());
                 return null;
             }
 
@@ -82,18 +91,23 @@ public class UserSessionPersistentChangelogBasedTransaction extends PersistentSe
 
             return wrappedEntity;
         } else {
+            LOG.info("mazend: If entity is scheduled for remove, we don't return it.");
             // If entity is scheduled for remove, we don't return it.
             boolean scheduledForRemove = myUpdates.getUpdateTasks().stream()
                     .map(SessionUpdateTask::getOperation)
                     .anyMatch(SessionUpdateTask.CacheOperation.REMOVE::equals);
 
+            LOG.info("mazend: scheduledForRemove = " + scheduledForRemove);
             return scheduledForRemove ? null : myUpdates.getEntityWrapper();
         }
     }
 
     private SessionEntityWrapper<UserSessionEntity> getSessionEntityFromPersister(RealmModel realm, String key, boolean offline) {
+        LOG.infof("mazend: getSessionEntityFromPersister: key = %s, offline = %b", key, offline);
         UserSessionPersisterProvider persister = kcSession.getProvider(UserSessionPersisterProvider.class);
+        LOG.infof("mazend: getSessionEntityFromPersister: persister = " + persister);
         UserSessionModel persistentUserSession = persister.loadUserSession(realm, key, offline);
+        LOG.infof("mazend: getSessionEntityFromPersister: persistentUserSession = " + persistentUserSession);
 
         if (persistentUserSession == null) {
             return null;
@@ -106,31 +120,45 @@ public class UserSessionPersistentChangelogBasedTransaction extends PersistentSe
         String sessionId = persistentUserSession.getId();
         boolean offline = persistentUserSession.isOffline();
 
+        LOG.infof("mazend: importUserSession: sessionId = %s, offline = %b", sessionId, offline);
+
         if (isScheduledForRemove(sessionId, offline)) {
+            LOG.infof("mazend: isScheduledForRemove == true");
             return null;
         }
 
-        LOG.debugf("Attempting to import user-session for sessionId=%s offline=%s", sessionId, offline);
+        LOG.infof("Attempting to import user-session for sessionId=%s offline=%s", sessionId, offline);
         SessionEntityWrapper<UserSessionEntity> ispnUserSessionEntity = ((PersistentUserSessionProvider) kcSession.getProvider(UserSessionProvider.class)).importUserSession(persistentUserSession, offline);
 
         if (ispnUserSessionEntity != null) {
-            LOG.debugf("user-session found after import for sessionId=%s offline=%s", sessionId, offline);
+            LOG.infof("user-session found after import for sessionId=%s offline=%s", sessionId, offline);
             return ispnUserSessionEntity;
         }
 
-        LOG.debugf("user-session could not be found after import for sessionId=%s offline=%s", sessionId, offline);
+        LOG.infof("user-session could not be found after import for sessionId=%s offline=%s", sessionId, offline); // <-- 여기에 걸림
         return null;
     }
 
     public boolean isScheduledForRemove(String key, boolean offline) {
+        LOG.infof("mazend: isScheduledForRemove: key = %s, offline = %b", key, offline);
         return isScheduledForRemove(getUpdates(offline).get(key));
     }
 
     private static <V extends SessionEntity> boolean isScheduledForRemove(SessionUpdatesList<V> myUpdates) {
+        LOG.infof("mazend: isScheduledForRemove: myUpdates = " + myUpdates);
         if (myUpdates == null) {
+            LOG.infof("mazend: isScheduledForRemove: myUpdates == null");
             return false;
         }
         // If entity is scheduled for remove, we don't return it.
+
+        LOG.infof("mazend: isScheduledForRemove: myUpdates != null");
+        if (!myUpdates.getUpdateTasks().isEmpty()) {
+            for (SessionUpdateTask updateTask : myUpdates.getUpdateTasks()) {
+                LOG.infof("mazend: updateTask = " + updateTask);
+                LOG.infof("mazend: updateTask = " + updateTask.getOperation());
+            }
+        }
 
         return myUpdates.getUpdateTasks()
                 .stream()

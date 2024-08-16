@@ -49,7 +49,7 @@ WORKDIR /opt/keycloak
 RUN keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=server" -alias server -ext "SAN=DNS:localhost,IP:127.0.0.1" -keystore conf/server.keystore
 
 # Keycloak 커스텀 프로바이더 설치
-COPY apple-identity-provider-1.10.0.jar /opt/keycloak/providers/
+COPY apple-identity-provider-1.13.0.jar /opt/keycloak/providers/
 COPY knowk-keycloak-userapp-theme.jar /opt/keycloak/providers/
 
 RUN /opt/keycloak/bin/kc.sh build

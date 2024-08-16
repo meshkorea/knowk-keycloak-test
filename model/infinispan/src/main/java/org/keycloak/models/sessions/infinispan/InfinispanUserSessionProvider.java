@@ -267,6 +267,7 @@ public class InfinispanUserSessionProvider implements UserSessionProvider, Sessi
 
     @Override
     public UserSessionModel getUserSession(RealmModel realm, String id) {
+        log.info("mazend: getUserSession");
         return getUserSession(realm, id, false);
     }
 

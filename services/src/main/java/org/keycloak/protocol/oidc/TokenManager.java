@@ -163,8 +163,14 @@ public class TokenManager {
             }
         } else {
             // Find userSession regularly for online tokens
-            userSession = session.sessions().getUserSession(realm, oldToken.getSessionState());
+            logger.infof("mazend: realm = %s", realm.getName());
+            logger.infof("mazend: realm getId = %s", realm.getId());
+            logger.infof("mazend: oldToken.getSessionState() = %s", oldToken.getSessionState());
+            logger.infof("mazend: session.sessions().getOfflineSessionsCount = %d", session.sessions().getOfflineSessionsCount(realm, realm.getClientById("7dcb36de-146e-4ebe-82cd-c0087a781e20"))); // knowk-userapp-service
+
+            userSession = session.sessions().getUserSession(realm, oldToken.getSessionState()); // 여기서 유저 세션을 못가져옴 왜지?
             if (!AuthenticationManager.isSessionValid(realm, userSession)) {
+                logger.info("mazend: Session not active3");
                 AuthenticationManager.backchannelLogout(session, realm, userSession, uriInfo, connection, headers, true);
                 throw new OAuthErrorException(OAuthErrorException.INVALID_GRANT, "Session not active", "Session not active");
             }
