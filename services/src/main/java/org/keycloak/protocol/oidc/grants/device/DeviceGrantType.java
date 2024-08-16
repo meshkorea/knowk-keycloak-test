@@ -19,6 +19,7 @@ package org.keycloak.protocol.oidc.grants.device;
 
 import static org.keycloak.protocol.oidc.OIDCLoginProtocolService.tokenServiceBaseUrl;
 
+import org.jboss.logging.Logger;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.common.Profile;
@@ -79,6 +80,8 @@ public class DeviceGrantType extends OAuth2GrantTypeBase {
     public static final String OAUTH2_DEVICE_VERIFIED_USER_CODE = "OAUTH2_DEVICE_VERIFIED_USER_CODE";
     public static final String OAUTH2_DEVICE_USER_CODE = "device_user_code";
     public static final String OAUTH2_USER_CODE_VERIFY = "device/verify";
+
+    private static final Logger logger = Logger.getLogger(DeviceGrantType.class);
 
     public static UriBuilder oauth2DeviceVerificationUrl(UriInfo uriInfo) {
         UriBuilder baseUriBuilder = uriInfo.getBaseUriBuilder();
@@ -317,6 +320,7 @@ public class DeviceGrantType extends OAuth2GrantTypeBase {
         }
 
         if (!AuthenticationManager.isSessionValid(realm, userSession)) {
+            logger.info("mazend: Session not active2");
             String errorMessage = "Session not active";
             event.detail(Details.REASON, errorMessage);
             event.error(Errors.USER_SESSION_NOT_FOUND);

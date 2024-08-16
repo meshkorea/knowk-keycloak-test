@@ -17,6 +17,7 @@
 
 package org.keycloak.models.session;
 
+import org.jboss.logging.Logger;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.keycloak.common.Profile;
 import org.keycloak.models.AuthenticatedClientSessionModel;
@@ -40,6 +41,8 @@ import static org.keycloak.models.Constants.SESSION_NOTE_LIGHTWEIGHT_USER;
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
 public class PersistentUserSessionAdapter implements OfflineUserSessionModel {
+
+    protected static final Logger logger = Logger.getLogger(PersistentUserSessionAdapter.class);
 
     private final PersistentUserSessionModel model;
     private UserModel user;
@@ -158,6 +161,7 @@ public class PersistentUserSessionAdapter implements OfflineUserSessionModel {
             try {
                 data = JsonSerialization.readValue(model.getData(), PersistentUserSessionData.class);
             } catch (IOException ioe) {
+                logger.infof("mazend: model.getData = %s", model.getData());
                 throw new ModelException("Error restoring session", ioe);
             }
         }

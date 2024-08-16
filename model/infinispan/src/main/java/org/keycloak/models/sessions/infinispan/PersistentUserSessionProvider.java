@@ -278,11 +278,14 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
 
     @Override
     public UserSessionModel getUserSession(RealmModel realm, String id) {
+        log.info("mazend: getUserSession2");
         return getUserSession(realm, id, false);
     }
 
     private UserSessionAdapter getUserSession(RealmModel realm, String id, boolean offline) {
+        log.info("mazend: getUserSession2.1");
         SessionEntityWrapper<UserSessionEntity> entityWrapper = sessionTx.get(realm, id, offline);
+        log.info("mazend: getUserSession2.1 entityWrapper = " + entityWrapper);
         return entityWrapper != null ? wrap(realm, entityWrapper.getEntity(), offline) : null;
     }
 
@@ -300,11 +303,14 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
 
 
     protected Stream<UserSessionModel> getUserSessionsStream(RealmModel realm, UserSessionPredicate predicate, boolean offline) {
+        log.infof("mazend: persist: getUserSessionsStream3");
         // fetch the offline user-sessions from the persistence provider
         UserSessionPersisterProvider persister = session.getProvider(UserSessionPersisterProvider.class);
         if (predicate.getUserId() != null) {
+            log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null");
             UserModel user;
             if (LightweightUserAdapter.isLightweightUser(predicate.getUserId())) {
+                log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null -> 1");
               user = new UserModelDelegate(null) {
                   @Override
                   public String getId() {
@@ -312,19 +318,23 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
                   }
               };
             } else {
+                log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null -> 2");
               user = session.users().getUserById(realm, predicate.getUserId());
             }
             if (user != null) {
+                log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null -> 3");
                 return persister.loadUserSessionsStream(realm, user, offline, 0, null)
                         .filter(predicate.toModelPredicate())
                         .map(s -> (UserSessionModel) getUserSession(realm, s.getId(), offline))
                         .filter(Objects::nonNull);
             } else {
+                log.infof("mazend: persist: getUserSessionsStream3: predicate.getUserId() != null -> 4");
                 return Stream.empty();
             }
         }
 
         if (predicate.getBrokerUserId() != null) {
+            log.infof("mazend: persist: getUserSessionsStream3: predicate.getBrokerUserId() != null");
             String[] idpAliasSessionId = predicate.getBrokerUserId().split("\\.");
 
             Map<String, String> attributes = new HashMap<>();
@@ -342,7 +352,12 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
         }
 
         if (predicate.getClient() != null) {
+            log.infof("mazend: persist: getUserSessionsStream3: predicate.getClient() != null");
             ClientModel client = session.clients().getClientById(realm, predicate.getClient());
+
+            log.infof("mazend: persist: getUserSessionsStream3: loadUserSessionsStream count = %d",
+                    persister.loadUserSessionsStream(realm, client, offline, 0, null).count());
+
             return persister.loadUserSessionsStream(realm, client, offline, 0, null)
                     .filter(predicate.toModelPredicate())
                     .map(s -> (UserSessionModel) getUserSession(realm, s.getId(), offline))
@@ -350,6 +365,7 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
         }
 
         if (predicate.getBrokerSessionId() != null && !offline) {
+            log.infof("mazend: persist: getUserSessionsStream3: predicate.getBrokerSessionId() != null && !offline");
             // we haven't yet migrated the old offline entries, so they don't have a brokerSessionId yet
             return Stream.of(persister.loadUserSessionsStreamByBrokerSessionId(realm, predicate.getBrokerSessionId(), false))
                     .filter(predicate.toModelPredicate())
@@ -400,10 +416,12 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
 
     @Override
     public Stream<UserSessionModel> getUserSessionsStream(RealmModel realm, ClientModel client, Integer firstResult, Integer maxResults) {
+        log.infof("mazend: persist: getUserSessionsStream1");
         return getUserSessionsStream(realm, client, firstResult, maxResults, false);
     }
 
     protected Stream<UserSessionModel> getUserSessionsStream(final RealmModel realm, ClientModel client, Integer firstResult, Integer maxResults, final boolean offline) {
+        log.infof("mazend: persist: getUserSessionsStream2");
         UserSessionPredicate predicate = UserSessionPredicate.create(realm.getId()).client(client.getId());
 
         return paginatedStream(getUserSessionsStream(realm, predicate, offline), firstResult, maxResults);
@@ -776,12 +794,17 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
     }
 
     public SessionEntityWrapper<UserSessionEntity> importUserSession(UserSessionModel persistentUserSession, boolean offline) {
+        log.infof("mazend: importUserSession: persistentUserSession = %s", persistentUserSession);
+        log.infof("mazend: importUserSession: offline = %b", offline);
+
         Map<UUID, SessionEntityWrapper<AuthenticatedClientSessionEntity>> clientSessionsById = new HashMap<>();
 
         UserSessionEntity userSessionEntityToImport = createUserSessionEntityInstance(persistentUserSession);
 
         for (Map.Entry<String, AuthenticatedClientSessionModel> entry : persistentUserSession.getAuthenticatedClientSessions().entrySet()) {
             String clientUUID = entry.getKey();
+            log.infof("mazend: importUserSession: clientUUID = %s", clientUUID);
+
             AuthenticatedClientSessionModel clientSession = entry.getValue();
             AuthenticatedClientSessionEntity clientSessionToImport = createAuthenticatedClientSessionInstance(userSessionEntityToImport.getId(), clientSession,
                     userSessionEntityToImport.getRealmId(), clientUUID, offline);
@@ -810,6 +833,7 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
                 offline ? SessionTimeouts::getOfflineSessionMaxIdleMs : SessionTimeouts::getUserSessionMaxIdleMs);
 
         if (sessionsById.isEmpty()) {
+            log.infof("mazend: importUserSession: sessionsById.isEmpty() == true");
             return null;
         }
 
@@ -859,9 +883,14 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
             long lifespan = lifespanMsCalculator.apply(currentRealm, client, sessionEntity);
             long maxIdle = maxIdleTimeMsCalculator.apply(currentRealm, client, sessionEntity);
 
+            log.infof("mazend: importSessionsWithExpiration: lifespan = %d, maxIdle = %d", lifespan, maxIdle);
+            log.infof("mazend: importSessionsWithExpiration: ENTRY_EXPIRED_FLAG = %d, ENTRY_EXPIRED_FLAG = %d", SessionTimeouts.ENTRY_EXPIRED_FLAG, SessionTimeouts.ENTRY_EXPIRED_FLAG);
+
             if (lifespan != SessionTimeouts.ENTRY_EXPIRED_FLAG
                     && maxIdle != SessionTimeouts.ENTRY_EXPIRED_FLAG) {
+                log.infof("mazend: importSessionsWithExpiration: in if statement");
                 if (cache instanceof RemoteCache) {
+                    log.infof("mazend: importSessionsWithExpiration: cache instanceof RemoteCache == true");
                     Retry.executeWithBackoff((int iteration) -> {
 
                         try {
@@ -878,10 +907,13 @@ public class PersistentUserSessionProvider implements UserSessionProvider, Sessi
 
                     }, 10, 10);
                 } else {
+                    log.infof("mazend: importSessionsWithExpiration: cache instanceof RemoteCache != true");
                     cache.putIfAbsent(entry.getKey(), entry.getValue(), lifespan, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
                 }
+                log.infof("mazend: importSessionsWithExpiration: return entry");
                 return entry;
             } else {
+                log.infof("mazend: importSessionsWithExpiration: return null");
                 return null;
             }
         }).filter(Objects::nonNull).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

@@ -557,10 +557,13 @@ public class ClientResource {
     @Tag(name = KeycloakOpenAPI.Admin.Tags.CLIENTS)
     @Operation( summary = "Get user sessions for client Returns a list of user sessions associated with this client\n")
     public Stream<UserSessionRepresentation> getUserSessions(@Parameter(description = "Paging offset") @QueryParam("first") Integer firstResult, @Parameter(description = "Maximum results size (defaults to 100)") @QueryParam("max") Integer maxResults) {
+        logger.infof("mazend: getUserSessions");
         auth.clients().requireView(client);
 
         firstResult = firstResult != null ? firstResult : -1;
         maxResults = maxResults != null ? maxResults : Constants.DEFAULT_MAX_RESULTS;
+
+        logger.infof("mazend: getUserSessions: count = %d", session.sessions().getUserSessionsStream(client.getRealm(), client, firstResult, maxResults).count());
         return session.sessions().getUserSessionsStream(client.getRealm(), client, firstResult, maxResults)
                 .map(ModelToRepresentation::toRepresentation);
     }

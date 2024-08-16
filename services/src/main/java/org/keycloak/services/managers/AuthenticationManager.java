@@ -175,8 +175,9 @@ public class AuthenticationManager {
     private static final TokenTypeCheck VALIDATE_IDENTITY_COOKIE = new TokenTypeCheck(Arrays.asList(TokenUtil.TOKEN_TYPE_KEYCLOAK_ID));
 
     public static boolean isSessionValid(RealmModel realm, UserSessionModel userSession) {
+
         if (userSession == null) {
-            logger.debug("No user session");
+            logger.info("No user session");
             return false;
         }
         long currentTime = Time.currentTimeMillis();
@@ -185,8 +186,15 @@ public class AuthenticationManager {
         long idle = SessionExpirationUtils.calculateUserSessionIdleTimestamp(userSession.isOffline(),
                 userSession.isRememberMe(), TimeUnit.SECONDS.toMillis(userSession.getLastSessionRefresh()), realm);
 
+        logger.infof("currentTime = %d", currentTime);
+        logger.infof("lifespan = %d", lifespan);
+        logger.infof("idle = %d", idle);
+
         boolean sessionIdleOk = idle > currentTime - TimeUnit.SECONDS.toMillis(SessionTimeoutHelper.IDLE_TIMEOUT_WINDOW_SECONDS);
         boolean sessionMaxOk = lifespan == -1L || lifespan > currentTime;
+
+        logger.infof("sessionIdleOk = %b", sessionIdleOk);
+        logger.infof("sessionMaxOk = %b", sessionMaxOk);
         return sessionIdleOk && sessionMaxOk;
     }
 

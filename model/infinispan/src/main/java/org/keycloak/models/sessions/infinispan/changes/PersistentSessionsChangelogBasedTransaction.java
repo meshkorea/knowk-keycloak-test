@@ -140,6 +140,9 @@ abstract public class PersistentSessionsChangelogBasedTransaction<K, V extends S
     }
 
     protected Map<K, SessionUpdatesList<V>> getUpdates(boolean offline) {
+        LOG.infof("mazend: getUpdates(%s)", offline);
+        LOG.infof("mazend: updates.size = %d", updates.size());
+        LOG.infof("mazend: offlineUpdates.size = %d", offlineUpdates.size());
         if (offline) {
             return offlineUpdates;
         } else {
