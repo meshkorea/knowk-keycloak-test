@@ -1,7 +1,7 @@
 # [S]소스로부터 키클락 이미지 만들기
 FROM registry.access.redhat.com/ubi9 AS ubi-micro-build
 
-ENV KEYCLOAK_VERSION 25.0.2
+ENV KEYCLOAK_VERSION 23.0.5
 ARG KEYCLOAK_DIST=https://github.com/keycloak/keycloak/releases/download/$KEYCLOAK_VERSION/keycloak-$KEYCLOAK_VERSION.tar.gz
 
 RUN dnf install -y tar gzip
@@ -37,7 +37,7 @@ EXPOSE 8443
 #ENTRYPOINT [ "/opt/keycloak/bin/kc.sh" ]
 # [E]소스로부터 키클락 이미지 만들기
 # Keycloak 베이스 이미지 설정
-#FROM quay.io/keycloak/keycloak:25.0.2 as builder
+#FROM quay.io/keycloak/keycloak:23.0.5 as builder
 
 # 건강 상태 및 메트릭스 지원 활성화, 데이터베이스 벤더 구성
 ENV KC_HEALTH_ENABLED=true \
@@ -58,16 +58,15 @@ COPY knowk-keycloak-userapp-theme.jar /opt/keycloak/providers/
 RUN /opt/keycloak/bin/kc.sh build
 
 # Keycloak 이미지 최종 레이어
-#FROM quay.io/keycloak/keycloak:25.0.2
+#FROM quay.io/keycloak/keycloak:23.0.5
 #COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
-
 # Database, Keycloak 서버 구성 및 관리자 계정 설정
-ENV KC_DB=mysql \
-    KC_DB_URL=jdbc:mysql://sandbox01-shared-mysql.cluster-c1ekmeygyqx9.ap-northeast-2.rds.amazonaws.com:3306/qa1_keycloak \
+ENV KC_DB=mariadb \
+    KC_DB_URL=jdbc:mariadb://sandbox01-shared-mysql.cluster-c1ekmeygyqx9.ap-northeast-2.rds.amazonaws.com:3306/keycloak \
     KC_DB_USERNAME=developer \
     KC_DB_PASSWORD=4(wn|>eLC^d7g@9o \
-    KC_HOSTNAME=qa1-keycloak.sand01.knowk.io \
+    KC_HOSTNAME=keycloak.sand01.knowk.io \
     KEYCLOAK_ADMIN=admin \
     KEYCLOAK_ADMIN_PASSWORD=admin \
     PROXY_ADDRESS_FORWARDING=true \
@@ -77,3 +76,4 @@ ENV KC_DB=mysql \
 # Keycloak 실행 명령
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
 CMD ["start", "--features=admin-fine-grained-authz,token-exchange,persistent-user-sessions"]
+
