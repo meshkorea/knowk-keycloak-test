@@ -376,8 +376,8 @@ importers:
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.18.0)
       '@rollup/plugin-typescript':
-        specifier: ^11.1.6
-        version: 11.1.6(rollup@4.18.0)(tslib@2.6.3)(typescript@5.4.5)
+        specifier: ^12.1.0
+        version: 12.1.0(rollup@4.18.0)(tslib@2.6.3)(typescript@5.4.5)
       es6-promise:
         specifier: ^4.2.8
         version: 4.2.8
@@ -868,6 +868,7 @@ packages:
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
     engines: {node: '>=10.10.0'}
+    deprecated: Use @eslint/config-array instead
 
   '@humanwhocodes/module-importer@1.0.1':
     resolution: {integrity: sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA==}
@@ -875,6 +876,7 @@ packages:
 
   '@humanwhocodes/object-schema@2.0.3':
     resolution: {integrity: sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==}
+    deprecated: Use @eslint/object-schema instead
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -1131,8 +1133,8 @@ packages:
       rollup:
         optional: true
 
-  '@rollup/plugin-typescript@11.1.6':
-    resolution: {integrity: sha512-R92yOmIACgYdJ7dJ97p4K69I8gg6IEHt8M7dUBxN3W6nrO8uUxX5ixl0yU/N3aZTi8WhPuICvOHXQvF6FaykAA==}
+  '@rollup/plugin-typescript@12.1.0':
+    resolution: {integrity: sha512-Kzs8KGJofe7cfTRODsnG1jNGxSvU8gVoNNd7Z/QaY25AYwe2LSSUpx/kPxqF38NYkpR8de3m51r9uwJpDlz6dg==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       rollup: ^2.14.0||^3.0.0||^4.0.0
@@ -5623,7 +5625,7 @@ snapshots:
     optionalDependencies:
       rollup: 4.18.0
 
-  '@rollup/plugin-typescript@11.1.6(rollup@4.18.0)(tslib@2.6.3)(typescript@5.4.5)':
+  '@rollup/plugin-typescript@12.1.0(rollup@4.18.0)(tslib@2.6.3)(typescript@5.4.5)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.18.0)
       resolve: 1.22.8
